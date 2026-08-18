@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "biller_code": "BLR001",
+    "biller_name": "PLN Pascarabayar",
+    "category": "PLN",
+    "endpoint_url": "https://api-biller.pln.co.id/v1/pay",
+    "public_key": "pk_live_99812716238127381",
+    "private_key": "sk_live_****89a2",
+    "secret_key": "sec_****x78z",
+    "admin_fee": 2500,
+    "is_active": true,
+    "created_at": "2026-01-15T08:30:00Z",
+    "updated_at": "2026-06-10T10:15:00Z"
+  },
+  {
+    "id": 2,
+    "biller_code": "BLR002",
+    "biller_name": "BPJS Kesehatan",
+    "category": "Kesehatan",
+    "endpoint_url": "https://biller.bpjs-kesehatan.go.id/payment",
+    "public_key": "pk_live_44512398127391823",
+    "private_key": "sk_live_****33b1",
+    "secret_key": "sec_****k99m",
+    "admin_fee": 1500,
+    "is_active": true,
+    "created_at": "2026-01-20T09:00:00Z",
+    "updated_at": "2026-05-12T14:20:00Z"
+  },
+  {
+    "id": 3,
+    "biller_code": "BLR003",
+    "biller_name": "Telkom Indihome",
+    "category": "Internet",
+    "endpoint_url": "https://payment-gateway.telkom.co.id/api",
+    "public_key": "pk_live_11209381029381092",
+    "private_key": "sk_live_****77c4",
+    "secret_key": "sec_****p22q",
+    "admin_fee": 3000,
+    "is_active": true,
+    "created_at": "2026-02-01T11:45:00Z",
+    "updated_at": "2026-07-01T08:10:00Z"
+  },
+  {
+    "id": 4,
+    "biller_code": "BLR004",
+    "biller_name": "PDAM Kota Jakarta",
+    "category": "Air",
+    "endpoint_url": "https://biller.pdamjaya.co.id/v2",
+    "public_key": "pk_live_88301928301928301",
+    "private_key": "sk_live_****11d9",
+    "secret_key": "sec_****t44r",
+    "admin_fee": 2000,
+    "is_active": false,
+    "created_at": "2026-02-10T13:10:00Z",
+    "updated_at": "2026-08-05T16:00:00Z"
+  },
+  {
+    "id": 5,
+    "biller_code": "BLR005",
+    "biller_name": "Pulsa Telkomsel",
+    "category": "Pulsa",
+    "endpoint_url": "https://api.pulpam-provider.com/v1",
+    "public_key": "pk_live_55610293810923810",
+    "private_key": "sk_live_****55e3",
+    "secret_key": "sec_****m88x",
+    "admin_fee": 500,
+    "is_active": true,
+    "created_at": "2026-03-01T15:20:00Z",
+    "updated_at": "2026-08-10T09:30:00Z"
+  }
+]
