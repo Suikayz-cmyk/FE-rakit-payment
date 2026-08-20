@@ -7,6 +7,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TransactionPage } from './pages/TransactionPage';
 import { AdminLayout } from './layouts/AdminLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { WhitelistPage } from './pages/WhitelistPage';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/transaksi" element={<TransactionPage />} />
           <Route path="/saldo" element={<PlaceholderPage title="Saldo" />} />
           <Route path="/callback" element={<PlaceholderPage title="Callback Log" />} />
+          <Route path="/whitelist" element={<WhitelistPage />} />
         </Route>
       </Route>
 

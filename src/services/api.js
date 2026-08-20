@@ -97,4 +97,61 @@ export const transactionService = {
   },
 };
 
+// --- WHITELIST IP SERVICE ---
+export const whitelistService = {
+  getAll: async (params = {}) => {
+    const response = await api.get('/whitelist', { params });
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await api.get(`/whitelist/${id}`);
+    return response.data;
+  },
+  create: async (data) => {
+    const response = await api.post('/whitelist', data);
+    return response.data;
+  },
+  update: async (id, data) => {
+    const response = await api.put(`/whitelist/${id}`, data);
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/whitelist/${id}`);
+    return response.data;
+  },
+};
+
+// --- Callback Logs Service ---
+export const callbackLogService = {
+  getBillerLogs: async (params = {}) => {
+    const response = await api.get('/callback-logs/biller', { params });
+    return response.data;
+  },
+  getClientLogs: async (params = {}) => {
+    const response = await api.get('/callback-logs/client', { params });
+    return response.data;
+  },
+};
+
+// --- Digital Balance Service ---
+export const balanceService = {
+  getDigitalBalance: async (params = {}) => {
+    const response = await api.get('/digital-balance', { params });
+    return response.data;
+  },
+  getDigitalBalanceById: async (id) => {
+    const response = await api.get(`/digital-balance/${id}`);
+    return response.data;
+  },
+  getDigitalBalanceMitra: async (params = {}) => {
+    const response = await api.get('/digital-balance-mitra', { params });
+    return response.data;
+  },
+  getDigitalBalanceMitraById: async (id) => {
+    const response = await api.get(`/digital-balance-mitra/${id}`);
+    return response.data;
+  },
+};
+
+
 export default api;

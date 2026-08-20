@@ -8,7 +8,8 @@ import {
   Logs, 
   LogOut,
   PanelLeftClose,
-  PanelLeft       
+  PanelLeft,
+  Shield     
 } from 'lucide-react';
 
 export const Sidebar = ({ isCollapsed, setIsCollapsed, onLogout }) => {
@@ -21,6 +22,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onLogout }) => {
     { path: '/transaksi', label: 'Transaksi', icon: ArrowLeftRight },
     { path: '/saldo', label: 'Saldo', icon: Wallet },
     { path: '/callback', label: 'Callback Log', icon: Logs },
+    { label: 'Whitelist IP', path: '/whitelist', icon: Shield }
   ];
 
   const handleLogout = () => {
