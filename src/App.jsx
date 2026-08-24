@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AdminLayout } from './layouts/AdminLayout';
+import { ProtectedRoute } from './routes/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { BillerPage } from './pages/BillerPage';
 import { ChannelPage } from './pages/ChannelPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TransactionPage } from './pages/TransactionPage';
-import { AdminLayout } from './layouts/AdminLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { WhitelistPage } from './pages/WhitelistPage';
 import { BalancePage } from './pages/BalancePage';
 
