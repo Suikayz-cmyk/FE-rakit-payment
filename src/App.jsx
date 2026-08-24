@@ -9,6 +9,7 @@ import { PlaceholderPage } from './pages/PlaceholderPage';
 import { TransactionPage } from './pages/TransactionPage';
 import { WhitelistPage } from './pages/WhitelistPage';
 import { BalancePage } from './pages/BalancePage';
+import { LogPage } from './pages/LogPage';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -38,8 +39,7 @@ export default function App() {
           <Route path="/biller" element={<BillerPage />} />
           <Route path="/channel" element={<ChannelPage />} />
           <Route path="/transaksi" element={<TransactionPage />} />
-          <Route path="/saldo" element={<PlaceholderPage title="Saldo" />} />
-          <Route path="/callback" element={<PlaceholderPage title="Callback Log" />} />
+          <Route path="/Log" element={<LogPage />} />
           <Route path="/whitelist" element={<WhitelistPage />} />
           <Route path="/balance" element={<BalancePage />} />
         </Route>

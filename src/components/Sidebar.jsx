@@ -21,7 +21,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, onLogout }) => {
     { path: '/channel', label: 'Channel', icon: CreditCard },
     { path: '/transaksi', label: 'Transaksi', icon: ArrowLeftRight },
     { label: 'Saldo Digital', path: '/balance', icon: Wallet },
-    { path: '/callback', label: 'Callback Log', icon: Logs },
+    { path: '/Log', label: 'Callback Log', icon: Logs },
     { label: 'Whitelist IP', path: '/whitelist', icon: Shield }
   ];
 

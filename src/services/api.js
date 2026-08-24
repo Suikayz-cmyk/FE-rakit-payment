@@ -131,6 +131,14 @@ export const callbackLogService = {
     const response = await api.get('/callback-logs/client', { params });
     return response.data;
   },
+  getLogById: async (id) => {
+    const response = await api.get(`/callback-logs/biller/${id}`);
+    return response.data;
+  },
+  getClientLogById: async (id) => {
+    const response = await api.get(`/callback-logs/client/${id}`);
+    return response.data;
+  },
 };
 
 // --- Digital Balance Service ---
