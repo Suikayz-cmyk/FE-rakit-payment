@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { billerService } from '../services/api';
+import { RefreshCw } from 'lucide-react';
 
 export const BillerPage = () => {
   const [billers, setBillers] = useState([]);
@@ -10,7 +11,11 @@ export const BillerPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchBillers = async (forceFetch = false) => {
+  const sortByIdAsc = (dataArray) => {
+    return [...dataArray].sort((a, b) => Number(a.id) - Number(b.id));
+  };
+
+  const fetchBillers = useCallback(async (forceFetch = false) => {
     const cachedData = sessionStorage.getItem('billers_cache');
     const cachedTime = sessionStorage.getItem('billers_cache_time');
     const FIVE_MINUTES = 5 * 60 * 1000;
@@ -21,7 +26,8 @@ export const BillerPage = () => {
       cachedTime &&
       Date.now() - Number(cachedTime) < FIVE_MINUTES
     ) {
-      setBillers(JSON.parse(cachedData));
+      const parsedData = JSON.parse(cachedData);
+      setBillers(sortByIdAsc(parsedData));
       setLoading(false);
       return;
     }
@@ -30,9 +36,10 @@ export const BillerPage = () => {
       const res = await billerService.getAll();
       const data = res.data || res;
       const resultArr = Array.isArray(data) ? data : [];
+      const sortedArr = sortByIdAsc(resultArr);
 
-      setBillers(resultArr);
-      sessionStorage.setItem('billers_cache', JSON.stringify(resultArr));
+      setBillers(sortedArr);
+      sessionStorage.setItem('billers_cache', JSON.stringify(sortedArr));
       sessionStorage.setItem('billers_cache_time', String(Date.now()));
     } catch (err) {
       console.error('Gagal mengambil data biller:', err);
@@ -40,11 +47,11 @@ export const BillerPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBillers();
-  }, []);
+  }, [fetchBillers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,8 +78,9 @@ export const BillerPage = () => {
           const updatedList = prev.map((item) =>
             item.id === currentBiller.id ? { ...item, ...updatedItem } : item
           );
-          sessionStorage.setItem('billers_cache', JSON.stringify(updatedList));
-          return updatedList;
+          const sortedList = sortByIdAsc(updatedList);
+          sessionStorage.setItem('billers_cache', JSON.stringify(sortedList));
+          return sortedList;
         });
 
         alert('Berhasil memperbarui data biller!');
@@ -81,7 +89,7 @@ export const BillerPage = () => {
         const newItem = res.data || { id: Date.now(), ...formValues };
 
         setBillers((prev) => {
-          const updatedList = [newItem, ...prev];
+          const updatedList = sortByIdAsc([...prev, newItem]);
           sessionStorage.setItem('billers_cache', JSON.stringify(updatedList));
           return updatedList;
         });
@@ -119,11 +127,12 @@ export const BillerPage = () => {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => fetchBillers(true)}
-            className="border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            onClick={fetchBillers}
+            className="p-2 border border-slate-300 rounded-lg text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+            title="Refresh data"
           >
-            Refresh
-          </button>
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+         </button>
           <button
             type="button"
             onClick={() => handleOpenModal()}
@@ -149,8 +158,9 @@ export const BillerPage = () => {
           <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
             <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
               <tr>
+                <th className="px-4 py-3 font-semibold">ID</th>
                 <th className="px-4 py-3 font-semibold">Nama Biller</th>
-                <th className="px-4 py-3 font-semibold">Tipe / Kategori</th>
+                <th className="px-4 py-3 font-semibold">Tipe</th>
                 <th className="px-4 py-3 font-semibold">Endpoint</th>
                 <th className="px-4 py-3 font-semibold">Public Key</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
@@ -160,19 +170,25 @@ export const BillerPage = () => {
             <tbody className="divide-y divide-slate-100">
               {billers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
                     Belum ada data biller dari server.
                   </td>
                 </tr>
               ) : (
                 billers.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                      {item.id}
+                    </td>
+
                     <td className="px-4 py-3 font-bold text-slate-900">{item.name}</td>
+                    
                     <td className="px-4 py-3">
                       <span className="text-xs font-mono uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
                         {item.type}
                       </span>
                     </td>
+                    
                     <td className="px-4 py-3">
                       <code
                         className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700 truncate max-w-xs inline-block"
@@ -197,13 +213,13 @@ export const BillerPage = () => {
                     </td>
 
                     <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenModal(item)}
-                          className="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-700 hover:bg-slate-100"
-                        >
-                          Edit
-                        </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenModal(item)}
+                        className="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-700 hover:bg-slate-100"
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -218,7 +234,7 @@ export const BillerPage = () => {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center p-6 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-800">
-                {currentBiller ? 'Edit Biller' : 'Tambah Biller Baru'}
+                {currentBiller ? `Edit Biller #${currentBiller.id}` : 'Tambah Biller Baru'}
               </h3>
               <button
                 type="button"
@@ -242,14 +258,15 @@ export const BillerPage = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Tipe / Kategori</label>
-                  <input
+                  <label className="text-xs font-medium text-slate-700">Tipe</label>
+                  <select
                     name="type"
-                    defaultValue={currentBiller?.type || ''}
-                    required
-                    placeholder="Contoh: dev / prod"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                    defaultValue={currentBiller?.type || 'dev'}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="dev">dev</option>
+                    <option value="prod">prod</option>
+                  </select>
                 </div>
                 <div className="col-span-2 space-y-1">
                   <label className="text-xs font-medium text-slate-700">Endpoint URL</label>
@@ -287,7 +304,7 @@ export const BillerPage = () => {
                   <select
                     name="flag"
                     defaultValue={currentBiller ? String(currentBiller.flag) : '1'}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
                     <option value="1">Aktif (1)</option>
                     <option value="0">Non-Aktif (0)</option>
