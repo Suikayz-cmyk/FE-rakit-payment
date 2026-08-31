@@ -46,32 +46,27 @@ export const authService = {
 
 // --- BILLER SERVICE ---
 export const billerService = {
-  getAll: async () => {
-    return await api.get('/billers');
+  getAll: async (params = {}) => {
+    return await api.get('/billers', { params });
   },
-
   getById: async (id) => {
     return await api.get(`/billers/${id}`);
   },
-
   create: async (billerData) => {
     return await api.post('/billers', billerData);
   },
-
   update: async (id, billerData) => {
     return await api.put(`/billers/${id}`, billerData);
   },
-
   delete: async (id) => {
     return await api.delete(`/billers/${id}`);
   },
 };
 
-
 // --- PAYMENT CHANNEL SERVICE ---
 export const paymentChannelService = {
-  getAll: async () => {
-    return await api.get('/payment-channels');
+  getAll: async (params = {}) => {
+    return await api.get('/payment-channels', { params });
   },
   getById: async (id) => {
     return await api.get(`/payment-channels/${id}`);
@@ -84,7 +79,7 @@ export const paymentChannelService = {
   },
   delete: async (id) => {
     return await api.delete(`/payment-channels/${id}`);
-  }
+  },
 };
 
 // --- TRANSACTION SERVICE ---
@@ -100,66 +95,52 @@ export const transactionService = {
 // --- WHITELIST IP SERVICE ---
 export const whitelistService = {
   getAll: async (params = {}) => {
-    const response = await api.get('/whitelist', { params });
-    return response.data;
+    return await api.get('/whitelist', { params });
   },
   getById: async (id) => {
-    const response = await api.get(`/whitelist/${id}`);
-    return response.data;
+    return await api.get(`/whitelist/${id}`);
   },
   create: async (data) => {
-    const response = await api.post('/whitelist', data);
-    return response.data;
+    return await api.post('/whitelist', data);
   },
   update: async (id, data) => {
-    const response = await api.put(`/whitelist/${id}`, data);
-    return response.data;
+    return await api.put(`/whitelist/${id}`, data);
   },
   delete: async (id) => {
-    const response = await api.delete(`/whitelist/${id}`);
-    return response.data;
+    return await api.delete(`/whitelist/${id}`);
   },
 };
 
-// --- Callback Logs Service ---
+// --- CALLBACK LOGS SERVICE ---
 export const callbackLogService = {
   getBillerLogs: async (params = {}) => {
-    const response = await api.get('/callback-logs/biller', { params });
-    return response.data;
+    return await api.get('/callback-logs/biller', { params });
   },
   getClientLogs: async (params = {}) => {
-    const response = await api.get('/callback-logs/client', { params });
-    return response.data;
+    return await api.get('/callback-logs/client', { params });
   },
   getLogById: async (id) => {
-    const response = await api.get(`/callback-logs/biller/${id}`);
-    return response.data;
+    return await api.get(`/callback-logs/biller/${id}`);
   },
   getClientLogById: async (id) => {
-    const response = await api.get(`/callback-logs/client/${id}`);
-    return response.data;
+    return await api.get(`/callback-logs/client/${id}`);
   },
 };
 
-// --- Digital Balance Service ---
+// --- DIGITAL BALANCE SERVICE ---
 export const balanceService = {
   getDigitalBalance: async (params = {}) => {
-    const response = await api.get('/digital-balance', { params });
-    return response.data;
+    return await api.get('/digital-balance', { params });
   },
   getDigitalBalanceById: async (id) => {
-    const response = await api.get(`/digital-balance/${id}`);
-    return response.data;
+    return await api.get(`/digital-balance/${id}`);
   },
   getDigitalBalanceMitra: async (params = {}) => {
-    const response = await api.get('/digital-balance-mitra', { params });
-    return response.data;
+    return await api.get('/digital-balance-mitra', { params });
   },
   getDigitalBalanceMitraById: async (id) => {
-    const response = await api.get(`/digital-balance-mitra/${id}`);
-    return response.data;
+    return await api.get(`/digital-balance-mitra/${id}`);
   },
 };
-
 
 export default api;
