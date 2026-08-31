@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
 import { paymentChannelService } from '../services/api';
+import { RefreshCw } from 'lucide-react';
+import { ChannelFormModal } from '../components/modals/ChannelFormModal';
 
 export const ChannelPage = () => {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   
-  // State Modal Form
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentChannel, setCurrentChannel] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState(null);
 
-  // 1. GET /payment-channels (Fetch Data)
   const fetchChannels = async () => {
     setLoading(true);
     setErrorMsg('');
     try {
       const res = await paymentChannelService.getAll();
-      const data = res.data || res;
-      setChannels(Array.isArray(data) ? data : []);
+      const list = Array.isArray(res) ? res : (res?.data || []);
+
+      const sorted = [...list].sort((a, b) => Number(a.id) - Number(b.id));
+      setChannels(sorted);
     } catch (err) {
       console.error('Gagal memuat payment channel:', err);
       setErrorMsg(err.message || 'Gagal mengambil data payment channel.');
@@ -31,44 +32,11 @@ export const ChannelPage = () => {
     fetchChannels();
   }, []);
 
-  // 2. Open Modal (Tambah vs Edit)
   const handleOpenModal = (channel = null) => {
-    setCurrentChannel(channel);
+    setSelectedChannel(channel);
     setIsModalOpen(true);
   };
 
-  // 3. POST & PUT /payment-channels (Simpan Form)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const formData = new FormData(e.target);
-    const payload = {
-      code: formData.get('code'),
-      name: formData.get('name'),
-      type: formData.get('type'),
-      fee: Number(formData.get('fee')),
-      is_active: formData.get('is_active') === 'true',
-    };
-
-    try {
-      if (currentChannel) {
-        // UPDATE (PUT /payment-channels/:id)
-        await paymentChannelService.update(currentChannel.id, payload);
-      } else {
-        // CREATE (POST /payment-channels)
-        await paymentChannelService.create(payload);
-      }
-      setIsModalOpen(false);
-      fetchChannels(); // Refresh data
-    } catch (err) {
-      alert(err.message || 'Gagal menyimpan payment channel.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // 4. Toggle Status Aktif / Nonaktifkan Channel (Aksi Cepat)
   const handleToggleStatus = async (channel) => {
     const currentActive = channel.flag === 1 || channel.flag === '1';
     const nextFlag = currentActive ? 0 : 1;
@@ -82,7 +50,6 @@ export const ChannelPage = () => {
           ...channel,
           flag: nextFlag,
         });
-        // Update state lokal
         setChannels((prev) =>
           prev.map((item) =>
             item.id === channel.id ? { ...item, flag: nextFlag } : item
@@ -105,14 +72,15 @@ export const ChannelPage = () => {
           <button
             type="button"
             onClick={fetchChannels}
-            className="border border-slate-300 hover:bg-slate-100 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="p-2 border border-slate-300 rounded-lg text-slate-600 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+            title="Refresh data"
           >
-            Refresh
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             type="button"
             onClick={() => handleOpenModal()}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm cursor-pointer"
           >
             + Tambah Channel
           </button>
@@ -125,7 +93,6 @@ export const ChannelPage = () => {
         </div>
       )}
 
-      {/* Tabel Data Payment Channel */}
       {loading ? (
         <div className="p-12 text-center text-slate-500 text-sm bg-white rounded-xl border border-slate-200">
           Memuat data channel pembayaran...
@@ -135,18 +102,19 @@ export const ChannelPage = () => {
           <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
             <thead className="bg-slate-50 text-slate-700 border-b border-slate-200">
               <tr>
+                <th className="px-4 py-3 font-semibold">ID</th>
                 <th className="px-4 py-3 font-semibold">Kode Channel</th>
                 <th className="px-4 py-3 font-semibold">Nama Channel / Layanan</th>
-                <th className="px-4 py-3 font-semibold">Mitra / Metode</th>
+                <th className="px-4 py-3 font-semibold">Mitra / Biller</th>
                 <th className="px-4 py-3 font-semibold">Admin Fee</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Aksi</th>
+                <th className="px-4 py-3 font-semibold text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {channels.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
                     Belum ada data payment channel.
                   </td>
                 </tr>
@@ -156,63 +124,67 @@ export const ChannelPage = () => {
 
                   return (
                     <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                      {/* 1. Kode Channel */}
-                      <td className="px-4 py-3 font-mono font-bold text-slate-800">
-                        {item.channel_code || item.channel_id || '-'}
+                      <td className="px-4 py-3 font-mono text-xs text-slate-400">
+                        {item.id}
                       </td>
 
-                      {/* 2. Nama Channel / Layanan */}
-                      <td className="px-4 py-3 font-semibold text-slate-900">
-                        {item.service_name || item.company_name || '-'}
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                        {item.channel_code || '-'}
                       </td>
 
-                      {/* 3. Mitra & Metode */}
                       <td className="px-4 py-3">
-                        <span className="text-xs font-mono uppercase bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                          {item.method || item.mitra_code || 'MANUAL'}
-                        </span>
+                        <p className="font-semibold text-slate-800">{item.service_name || '-'}</p>
+                        <p className="text-xs text-slate-400 font-mono">{item.method || item.company_name || '-'}</p>
                       </td>
 
-                      {/* 4. Admin Fee & Mata Uang */}
-                      <td className="px-4 py-3 font-medium text-slate-700">
+                      <td className="px-4 py-3">
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold bg-blue-50 text-blue-700">
+                          {item.mitra_code || 'ALL MITRA'}
+                        </span>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{item.biller || '-'}</p>
+                      </td>
+
+                      <td className="px-4 py-3 font-mono text-sm text-slate-700">
                         {item.currency || 'IDR'} {Number(item.admin_fee || 0).toLocaleString('id-ID')}
                       </td>
 
-                      {/* 5. Status (flag: 1 = Aktif, 0 = Non-Aktif) */}
                       <td className="px-4 py-3">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                            isActive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-slate-100 text-slate-500'
-                          }`}
-                        >
-                          {isActive ? 'Aktif' : 'Non-Aktif'}
-                        </span>
-                      </td>
-
-                      {/* 6. Aksi */}
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col items-center justify-center w-16">
                           <button
                             type="button"
-                            onClick={() => handleOpenModal(item)}
-                            className="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-700 hover:bg-slate-100"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
+                            role="switch"
+                            aria-checked={isActive}
                             onClick={() => handleToggleStatus(item)}
-                            className={`px-3 py-1 border rounded text-xs font-medium ${
-                              isActive
-                                ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-                                : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                            className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out focus:outline-none ${
+                              isActive ? 'bg-[#4cd964]' : 'bg-[#ff3b30]'
+                            }`}
+                            title={isActive ? 'Status Aktif (Klik untuk matikan)' : 'Status Non-Aktif (Klik untuk aktifkan)'}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-md transform transition-transform duration-300 ease-in-out ${
+                                isActive ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+
+                          <span
+                            className={`text-[10px] font-bold tracking-tight text-center mt-1 w-full truncate ${
+                              isActive ? 'text-emerald-600' : 'text-rose-600'
                             }`}
                           >
-                            {isActive ? 'Nonaktifkan' : 'Aktifkan'}
-                          </button>
+                            {isActive ? 'Aktif' : 'Non-Aktif'}
+                          </span>
                         </div>
+                      </td>
+
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenModal(item)}
+                          className="px-3 py-1 border border-slate-300 rounded text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   );
@@ -223,107 +195,13 @@ export const ChannelPage = () => {
         </div>
       )}
 
-      {/* Modal Form */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-            <div className="flex justify-between items-center p-5 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800">
-                {currentChannel ? 'Edit Payment Channel' : 'Tambah Channel Baru'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Kode Channel</label>
-                <input
-                  name="code"
-                  defaultValue={currentChannel?.code || ''}
-                  required
-                  placeholder="Contoh: QRIS_DOKU, VA_BCA"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase font-mono"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Nama Channel</label>
-                <input
-                  name="name"
-                  defaultValue={currentChannel?.name || ''}
-                  required
-                  placeholder="Contoh: QRIS DOKU, Virtual Account BCA"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Tipe</label>
-                  <select
-                    name="type"
-                    defaultValue={currentChannel?.type || 'VA'}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    <option value="VA">Virtual Account</option>
-                    <option value="QRIS">QRIS</option>
-                    <option value="EWALLET">E-Wallet</option>
-                    <option value="CREDIT_CARD">Credit Card</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-700">Biaya Fee (Rp)</label>
-                  <input
-                    type="number"
-                    name="fee"
-                    defaultValue={currentChannel?.fee ?? 0}
-                    required
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Status</label>
-                <select
-                  name="is_active"
-                  defaultValue={currentChannel ? String(currentChannel.is_active) : 'true'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="true">Aktif</option>
-                  <option value="false">Non-Aktif</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Channel'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Modal Form Tambah / Edit Channel */}
+      <ChannelFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        channel={selectedChannel}
+        onSuccess={fetchChannels}
+      />
     </div>
   );
 };
