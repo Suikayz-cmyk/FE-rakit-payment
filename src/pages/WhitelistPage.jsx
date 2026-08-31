@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { whitelistService } from '../services/api';
-import { Shield, Plus, Search, Trash2, Edit2, RefreshCw, Globe } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, RefreshCw, Globe } from 'lucide-react';
+import { WhitelistFormModal } from '../components/modals/WhitelistFormModal';
 
 export const WhitelistPage = () => {
   const [ips, setIps] = useState([]);
@@ -9,8 +10,7 @@ export const WhitelistPage = () => {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentIp, setCurrentIp] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIp, setSelectedIp] = useState(null);
 
   const fetchWhitelist = useCallback(async () => {
     setLoading(true);
@@ -32,7 +32,6 @@ export const WhitelistPage = () => {
     fetchWhitelist();
   }, [fetchWhitelist]);
 
-  // Filter Search (hanya memeriksa IP & Nama Service/Mitra)
   const filteredIps = ips.filter((item) => {
     const ip = (item.ip_address || item.ip || '').toLowerCase();
     const serviceName = (item.service_name || item.client || item.mitra_code || '').toLowerCase();
@@ -41,45 +40,8 @@ export const WhitelistPage = () => {
   });
 
   const handleOpenModal = (item = null) => {
-    setCurrentIp(item);
+    setSelectedIp(item);
     setIsModalOpen(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const formData = new FormData(e.target);
-    const ipValue = formData.get('ip_address')?.trim();
-    const serviceValue = formData.get('service_name')?.trim();
-    const flagValue = Number(formData.get('flag') ?? 1);
-
-    // Kirim field ganda agar cocok dengan skema backend Golang (baik jika memakai tag json `service_name` / `client`)
-    const payload = {
-      ip_address: ipValue,
-      ip: ipValue,
-      service_name: serviceValue,
-      client: serviceValue,
-      flag: flagValue,
-    };
-
-    try {
-      if (currentIp) {
-        await whitelistService.update(currentIp.id, payload);
-        alert('Berhasil memperbarui Whitelist IP!');
-      } else {
-        await whitelistService.create(payload);
-        alert('Berhasil menambahkan Whitelist IP baru!');
-      }
-      setIsModalOpen(false);
-      fetchWhitelist();
-    } catch (err) {
-      console.error('Error simpan IP:', err);
-      const serverMsg = err.response?.data?.message || err.response?.data?.error || err.message;
-      alert(`Gagal menyimpan data IP: ${serverMsg}`);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handleDelete = async (item) => {
@@ -114,7 +76,7 @@ export const WhitelistPage = () => {
           <button
             type="button"
             onClick={fetchWhitelist}
-            className="p-2 border border-slate-300 rounded-lg text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+            className="p-2 border border-slate-300 rounded-lg text-slate-600 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
             title="Refresh data"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -122,7 +84,7 @@ export const WhitelistPage = () => {
           <button
             type="button"
             onClick={() => handleOpenModal(null)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah IP
@@ -137,13 +99,13 @@ export const WhitelistPage = () => {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cari IP Address"
+          placeholder="Cari IP Address atau Service Name..."
           className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
         />
       </div>
 
       {errorMsg && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg font-medium">
           {errorMsg}
         </div>
       )}
@@ -161,7 +123,7 @@ export const WhitelistPage = () => {
                 <th className="px-4 py-3 font-semibold">ID</th>
                 <th className="px-4 py-3 font-semibold">IP Address</th>
                 <th className="px-4 py-3 font-semibold">Service Name</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold text-center">Status</th>
                 <th className="px-4 py-3 font-semibold text-center">Aksi</th>
               </tr>
             </thead>
@@ -173,136 +135,73 @@ export const WhitelistPage = () => {
                   </td>
                 </tr>
               ) : (
-                filteredIps.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-slate-400">#{item.id}</td>
+                filteredIps.map((item) => {
+                  const isActive = item.flag === 1 || item.flag === '1';
 
-                    <td className="px-4 py-3">
-                      <div className="inline-flex items-center gap-2 bg-slate-100 px-2.5 py-1 rounded font-mono font-bold text-slate-800 text-xs">
-                        <Globe className="w-3.5 h-3.5 text-blue-600" />
-                        {item.ip_address || item.ip}
-                      </div>
-                    </td>
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs text-slate-400">#{item.id}</td>
 
-                    <td className="px-4 py-3 font-medium text-slate-800">
-                      {item.service_name || item.client || '-'}
-                    </td>
+                      <td className="px-4 py-3">
+                        <div className="inline-flex items-center gap-2 bg-slate-100 px-2.5 py-1 rounded font-mono font-bold text-slate-800 text-xs">
+                          <Globe className="w-3.5 h-3.5 text-blue-600" />
+                          {item.ip_address || item.ip}
+                        </div>
+                      </td>
 
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          item.flag === 1 || item.flag === '1'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        {item.flag === 1 || item.flag === '1' ? 'Aktif' : 'Nonaktif'}
-                      </span>
-                    </td>
+                      <td className="px-4 py-3 font-medium text-slate-800">
+                        {item.service_name || item.client || '-'}
+                      </td>
 
-                    <td className="px-4 py-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenModal(item)}
-                          className="p-1.5 border border-slate-200 rounded text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors"
-                          title="Edit"
+                      {/* Status Terpusat (Center) */}
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-flex items-center justify-center min-w-18.75 px-2.5 py-1 rounded-full text-xs font-medium ${
+                            isActive
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
                         >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(item)}
-                          className="p-1.5 border border-red-200 bg-red-50 rounded text-red-600 hover:bg-red-100 transition-colors"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {isActive ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(item)}
+                            className="p-1.5 border border-slate-200 rounded text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors cursor-pointer"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            className="p-1.5 border border-red-200 bg-red-50 rounded text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Modal Tambah / Edit IP */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-5 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-blue-600" />
-                {currentIp ? 'Edit Whitelist IP' : 'Tambah Whitelist IP'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 text-2xl leading-none"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">IP Address *</label>
-                <input
-                  type="text"
-                  name="ip_address"
-                  required
-                  placeholder="Contoh: 103.145.22.10 atau 127.0.0.1"
-                  defaultValue={currentIp?.ip_address || currentIp?.ip || ''}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Service Name *</label>
-                <input
-                  type="text"
-                  name="service_name"
-                  required
-                  placeholder="Contoh: KLKJAN25 atau KISEL"
-                  defaultValue={currentIp?.service_name || currentIp?.client || ''}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-700">Status</label>
-                <select
-                  name="flag"
-                  defaultValue={currentIp ? String(currentIp.flag) : '1'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                >
-                  <option value="1">Aktif (Izinkan Akses)</option>
-                  <option value="0">Nonaktif (Blokir Akses)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm disabled:opacity-50"
-                >
-                  {isSubmitting ? 'Menyimpan...' : currentIp ? 'Perbarui IP' : 'Simpan IP'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Modal Form Tambah / Edit Whitelist */}
+      <WhitelistFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        ipItem={selectedIp}
+        onSuccess={fetchWhitelist}
+      />
     </div>
   );
 };
